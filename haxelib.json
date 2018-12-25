@@ -1,6 +1,6 @@
 {
   "name": "arp_thirdparty",
-  "url" : "https://github.com/kaikoga/ArpThirdparty/",
+  "url" : "https://github.com/kaikoga/ArpThirdparty",
   "license": "MIT",
   "tags": ["game"],
   "description": "Supports ArpEngine with extra file formats.",
