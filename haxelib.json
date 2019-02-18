@@ -9,6 +9,6 @@
   "releasenote": "Initial release.",
   "contributors": ["kaikoga"],
   "dependencies": {
-    "arp_engine": "dev"
+    "arp_engine": ""
   }
 }
