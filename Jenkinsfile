@@ -2,6 +2,10 @@ pipeline {
 
     agent any
 
+    environment {
+        HAXELIB_CACHE = '../../.haxelib_cache/ArpThirdparty/.haxelib'
+    }
+
     stages {
         stage('prepare') {
             steps {
@@ -11,14 +15,14 @@ pipeline {
                 githubNotify(context: 'js_heaps', description: '', status: 'PENDING');
                 sh "haxelib newrepo"
                 sh "haxelib git arp_ci https://github.com/ArpEngine/Arp-ci master --always"
-                sh "HAXELIB_PATH=`pwd`/.haxelib haxelib run arp_ci sync"
+                sh "haxelib run arp_ci sync"
             }
         }
 
         stage('swf') {
             steps {
                 catchError {
-                    sh "HAXELIB_PATH=`pwd`/.haxelib ARPCI_PROJECT=ArpThirdparty ARPCI_TARGET=swf ARPCI_BACKEND=flash haxelib run arp_ci test"
+                    sh "ARPCI_PROJECT=ArpThirdparty ARPCI_TARGET=swf ARPCI_BACKEND=flash haxelib run arp_ci test"
                 }
             }
             post {
@@ -31,7 +35,7 @@ pipeline {
         stage('swf_heaps') {
             steps {
                 catchError {
-                    sh "HAXELIB_PATH=`pwd`/.haxelib ARPCI_PROJECT=ArpThirdparty ARPCI_TARGET=swf ARPCI_BACKEND=heaps haxelib run arp_ci test"
+                    sh "ARPCI_PROJECT=ArpThirdparty ARPCI_TARGET=swf ARPCI_BACKEND=heaps haxelib run arp_ci test"
                 }
             }
             post {
@@ -44,7 +48,7 @@ pipeline {
         stage('js') {
             steps {
                 catchError {
-                    sh "HAXELIB_PATH=`pwd`/.haxelib ARPCI_PROJECT=ArpThirdparty ARPCI_TARGET=js ARPCI_BACKEND=js haxelib run arp_ci test"
+                    sh "ARPCI_PROJECT=ArpThirdparty ARPCI_TARGET=js ARPCI_BACKEND=js haxelib run arp_ci test"
                 }
             }
             post {
@@ -57,7 +61,7 @@ pipeline {
         stage('js_heaps') {
             steps {
                 catchError {
-                    sh "HAXELIB_PATH=`pwd`/.haxelib ARPCI_PROJECT=ArpThirdparty ARPCI_TARGET=js ARPCI_BACKEND=heaps haxelib run arp_ci test"
+                    sh "ARPCI_PROJECT=ArpThirdparty ARPCI_TARGET=js ARPCI_BACKEND=heaps haxelib run arp_ci test"
                 }
             }
             post {
