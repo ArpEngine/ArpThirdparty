@@ -6,7 +6,7 @@ import arpx.file.File;
 @:arpType("tileMap", "fmfFile")
 class FmfFileTileMap extends ArrayTileMap {
 
-	@:arpBarrier @:arpField public var file:File;
+	@:arpBarrier(true, true) @:arpField public var file:File;
 
 	public function new() {
 		super();

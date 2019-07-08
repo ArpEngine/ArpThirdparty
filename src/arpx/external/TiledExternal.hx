@@ -22,7 +22,7 @@ import flash.utils.Endian;
 @:arpType("external", "tiled")
 class TiledExternal extends External {
 
-	@:arpBarrier @:arpField private var file:File;
+	@:arpBarrier(true, true) @:arpField private var file:File;
 	@:arpBarrier @:arpField private var chip:Chip;
 	@:arpBarrier @:arpField private var tileInfo:TileInfo;
 	@:arpField private var outerTileIndex:Int;
