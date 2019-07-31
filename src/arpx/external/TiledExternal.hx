@@ -88,7 +88,7 @@ class TiledExternal extends External {
 			var tmMortal:TileMapMortal = this.data.allocObject(TileMapMortal);
 			tmMortal.chip = this.chip;
 			tmMortal.tileMap = tileMap;
-			field.initMortals.addPair('_layer_${layer.get("name")}', tmMortal);
+			field.mortals.addPair('_layer_${layer.get("name")}', tmMortal);
 		}
 
 		var uniqueId:Int = 0;
@@ -99,7 +99,7 @@ class TiledExternal extends External {
 				if (name == null) name = Std.string(uniqueId++);
 				switch (this.loadTiledObject(object, gridSize)) {
 					case TiledObject.TiledMortal(mortal):
-						field.initMortals.addPair(name, mortal);
+						field.mortals.addPair(name, mortal);
 					case TiledObject.TiledAnchor(anchor):
 						field.anchors.addPair(name, anchor);
 				}
