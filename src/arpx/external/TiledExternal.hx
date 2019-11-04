@@ -1,23 +1,21 @@
 ﻿package arpx.external;
 
-#if flash
-
+import arp.io.BytesInputWrapper;
+import arp.io.IInput;
+import haxe.io.Bytes;
 import arp.data.DataGroup;
-import flash.utils.CompressionAlgorithm;
-import arpx.chip.Chip;
-import arpx.tileInfo.TileInfo;
-import arpx.mortal.TileMapMortal;
-import arpx.hitFrame.CuboidHitFrame;
-import arpx.hitFrame.HitFrame;
 import arp.seed.ArpSeed;
-import haxe.crypto.Base64;
-import arpx.mortal.Mortal;
 import arpx.anchor.Anchor;
-import arpx.tileMap.ArrayTileMap;
+import arpx.chip.Chip;
 import arpx.field.Field;
 import arpx.file.File;
-import flash.utils.ByteArray;
-import flash.utils.Endian;
+import arpx.hitFrame.CuboidHitFrame;
+import arpx.mortal.Mortal;
+import arpx.mortal.TileMapMortal;
+import arpx.tileInfo.TileInfo;
+import arpx.tileMap.ArrayTileMap;
+import format.tools.Inflate;
+import haxe.crypto.Base64;
 
 @:arpType("external", "tiled")
 class TiledExternal extends External {
@@ -50,7 +48,7 @@ class TiledExternal extends External {
 			return;
 		}
 		if (this.file.exists) {
-			var xml:Xml = Xml.parse(this.file.bytes().toString());
+			var xml:Xml = Xml.parse(this.file.bytes().toString()).firstElement();
 			if (xml != null) {
 				this.data = this.arpDomain.allocObject(DataGroup);
 				this.data.arpSlot.addReference();
@@ -75,7 +73,7 @@ class TiledExternal extends External {
 
 	private function loadTiledMap(xml:Xml):Field {
 		//tiled map => arp field
-		var field:Field = this.data.allocObject(Field);
+		var field:Field = this.data.allocObject(Field, null, this.arpSlot.primaryDir);
 
 		for (layer in xml.elementsNamed("layer")) {
 			var layerData:Array<Array<Int>> = this.readTiledLayer(layer);
@@ -112,11 +110,11 @@ class TiledExternal extends External {
 	private function loadTiledObject(xml:Xml, gridSize:Int):TiledObject {
 		if (xml.get("gid") != null) {
 			//tiled object with gid => arp mortal
-			var xml:Xml = Xml.parse('<mortal class="${xml.get("type")}">');
+			var x:Xml = Xml.parse('<mortal class="${xml.get("type")}"/>').firstElement();
 			for (property in xml.elementsNamed("properties").next().elementsNamed("property")) {
-				xml.set(property.get("name"), property.get("value"));
+				x.set(property.get("name"), property.get("value"));
 			}
-			var mortal:Mortal = this.arpDomain.loadSeed(ArpSeed.fromXml(xml), Mortal).value;
+			var mortal:Mortal = this.arpDomain.loadSeed(ArpSeed.fromXml(x), Mortal).value;
 			if (mortal == null) return null;
 
 			mortal.position.x = Std.parseFloat(xml.get("x"));
@@ -184,13 +182,13 @@ class TiledExternal extends External {
 				if (data.get("compression") != "zlib") {
 					//not supported
 				}
-				var bytes:ByteArray = Base64.decode(data.firstChild().nodeValue).getData();
-				bytes.uncompress(CompressionAlgorithm.ZLIB);
-				bytes.endian = Endian.LITTLE_ENDIAN;
+				var bytes:Bytes = Base64.decode(StringTools.trim(data.firstChild().nodeValue));
+				bytes = Inflate.run(bytes);
+				var input:IInput = new BytesInputWrapper(bytes);
 				for (y in 0...height) {
 					row = [];
 					for (x in 0...width) {
-						row.push(bytes.readUnsignedInt() - 1);
+						row.push(input.readInt32() - 1);
 					}
 					result.push(row);
 				}
@@ -205,5 +203,3 @@ private enum TiledObject {
 	TiledMortal(mortal:Mortal);
 	TiledAnchor(anchor:Anchor);
 }
-
-#end
