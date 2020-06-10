@@ -28,43 +28,14 @@ class TiledExternal extends External {
 	@:arpField private var defaultHitType:String;
 	@:arpField private var outerTileIndex:Int;
 
-	private var data:DataGroup;
+	public function new() super();
 
-	public function new() {
-		super();
-	}
-
-	@:arpHeatUp
-	private function heatUp():Bool {
-		this.load();
+	override private function doLoad(data:DataGroup):Bool {
+		if (!this.file.exists) return false;
+		var xml:Xml = Xml.parse(this.file.bytes().toString()).firstElement();
+		if (xml == null) return false;
+		this.loadTiled(xml);
 		return true;
-	}
-
-	@:arpHeatDown
-	private function heatDown():Bool {
-		this.unload();
-		return true;
-	}
-
-	override public function load(force:Bool = false):Void {
-		if (this.data != null && !force) {
-			return;
-		}
-		if (this.file.exists) {
-			var xml:Xml = Xml.parse(this.file.bytes().toString()).firstElement();
-			if (xml != null) {
-				this.data = this.arpDomain.allocObject(DataGroup);
-				this.data.arpSlot.addReference();
-				this.loadTiled(xml);
-			}
-		}
-	}
-
-	override public function unload():Void {
-		if (this.data != null) {
-			this.data.arpSlot.delReference();
-			this.data = null;
-		}
 	}
 
 	private function loadTiled(xml:Xml):Void {
