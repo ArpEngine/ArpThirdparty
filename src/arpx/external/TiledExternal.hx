@@ -1,9 +1,9 @@
 ﻿package arpx.external;
 
+import arp.data.DataGroup;
+import arp.ds.IMap;
 import arp.io.BytesInputWrapper;
 import arp.io.IInput;
-import haxe.io.Bytes;
-import arp.data.DataGroup;
 import arp.seed.ArpSeed;
 import arpx.anchor.Anchor;
 import arpx.chip.Chip;
@@ -16,6 +16,7 @@ import arpx.tileInfo.TileInfo;
 import arpx.tileMap.ArrayTileMap;
 import format.tools.Inflate;
 import haxe.crypto.Base64;
+import haxe.io.Bytes;
 
 @:arpType("external", "tiled")
 class TiledExternal extends External {
@@ -23,6 +24,8 @@ class TiledExternal extends External {
 	@:arpBarrier(true, true) @:arpField private var file:File;
 	@:arpBarrier @:arpField private var chip:Chip;
 	@:arpBarrier @:arpField private var tileInfo:TileInfo;
+	@:arpField("hitTypes", "hitType") private var hitTypes:IMap<String, String>;
+	@:arpField private var defaultHitType:String;
 	@:arpField private var outerTileIndex:Int;
 
 	private var data:DataGroup;
@@ -72,24 +75,16 @@ class TiledExternal extends External {
 	}
 
 	private function loadTiledMap(xml:Xml):Field {
+		var uniqueId:Int = 0;
 		//tiled map => arp field
 		var field:Field = this.data.allocObject(Field, null, this.arpSlot.primaryDir);
 
 		for (layer in xml.elementsNamed("layer")) {
-			var layerData:Array<Array<Int>> = this.readTiledLayer(layer);
-			var tileMap:ArrayTileMap = this.data.addOrphanObject(ArrayTileMap.fromArray(layerData));
-			tileMap.width = Std.parseInt(xml.get("width"));
-			tileMap.height = Std.parseInt(xml.get("height"));
-			tileMap.outerTileIndex = (this.outerTileIndex != 0) ? this.outerTileIndex : layerData[0][0];
-			// tileMap.tileInfo = this.tileInfo;
-
-			var tmMortal:TileMapMortal = this.data.allocObject(TileMapMortal);
-			tmMortal.chip = this.chip;
-			tmMortal.tileMap = tileMap;
-			field.mortals.addPair('_layer_${layer.get("name")}', tmMortal);
+			var name:String = layer.get("name");
+			if (name == null) name = Std.string(uniqueId++);
+			field.mortals.addPair('_layer_$name', loadTiledLayer(layer));
 		}
 
-		var uniqueId:Int = 0;
 		var gridSize:Int = Std.parseInt(xml.get("tilewidth"));
 		for (objectgroup in xml.elementsNamed("objectgroup")) {
 			for (object in objectgroup.elementsNamed("object")) {
@@ -105,6 +100,32 @@ class TiledExternal extends External {
 		}
 
 		return field;
+	}
+
+	private function loadTiledLayer(layer:Xml):TileMapMortal {
+		var layerData:Array<Array<Int>> = this.readTiledLayer(layer);
+		var name:String = layer.get("name");
+		var tileMap:ArrayTileMap = this.data.addOrphanObject(ArrayTileMap.fromArray(layerData));
+		tileMap.width = Std.parseInt(layer.get("width"));
+		tileMap.height = Std.parseInt(layer.get("height"));
+		tileMap.outerTileIndex = (this.outerTileIndex != 0) ? this.outerTileIndex : layerData[0][0];
+		tileMap.tileInfo = this.tileInfo;
+
+		var tmMortal:TileMapMortal = this.data.allocObject(TileMapMortal);
+		tmMortal.chip = this.chip;
+		tmMortal.tileMap = tileMap;
+
+		var hitType:String = if (this.hitTypes.hasKey(name)) this.hitTypes.get(name) else this.defaultHitType;
+		if (hitType != null) {
+			var tmHitFrame:CuboidHitFrame = this.data.allocObject(CuboidHitFrame);
+			tmHitFrame.hitType = hitType;
+			tmHitFrame.hitCuboid.sizeX = Math.POSITIVE_INFINITY;
+			tmHitFrame.hitCuboid.sizeY = Math.POSITIVE_INFINITY;
+			tmHitFrame.hitCuboid.sizeZ = Math.POSITIVE_INFINITY;
+			tmMortal.hitFrames.add(tmHitFrame);
+		}
+
+		return tmMortal;
 	}
 
 	private function loadTiledObject(xml:Xml, gridSize:Int):TiledObject {
