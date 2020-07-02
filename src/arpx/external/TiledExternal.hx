@@ -120,7 +120,7 @@ class TiledExternal extends External {
 
 			var hitFrame:CuboidHitFrame = this.data.allocObject(CuboidHitFrame);
 			var width:Float = Std.parseFloat(xml.get("width")) / 2;
-			var height:Float = Std.parseFloat(xml.get("width")) / 2;
+			var height:Float = Std.parseFloat(xml.get("height")) / 2;
 			hitFrame.hitCuboid.dX = width;
 			hitFrame.hitCuboid.dY = height;
 			hitFrame.hitCuboid.sizeX = width;
