@@ -53,7 +53,7 @@ class TiledExternal extends External {
 		for (layer in xml.elementsNamed("layer")) {
 			var name:String = layer.get("name");
 			if (name == null) name = Std.string(uniqueId++);
-			field.mortals.addPair('_layer_$name', loadTiledLayer(layer));
+			field.mortals.addPair('_layer_$name', loadTiledLayer(xml, layer, field));
 		}
 
 		var gridSize:Int = Std.parseInt(xml.get("tilewidth"));
@@ -73,14 +73,18 @@ class TiledExternal extends External {
 		return field;
 	}
 
-	private function loadTiledLayer(layer:Xml):TileMapMortal {
+	private function loadTiledLayer(xml:Xml, layer:Xml, field:Field):TileMapMortal {
 		var layerData:Array<Array<Int>> = this.readTiledLayer(layer);
 		var name:String = layer.get("name");
 		var tileMap:ArrayTileMap = this.data.addOrphanObject(ArrayTileMap.fromArray(layerData));
+		var tileWidth:Int = Std.parseInt(xml.get("tilewidth"));
+		var tileHeight:Int = Std.parseInt(xml.get("tileheight"));
 		tileMap.width = Std.parseInt(layer.get("width"));
 		tileMap.height = Std.parseInt(layer.get("height"));
 		tileMap.outerTileIndex = (this.outerTileIndex != 0) ? this.outerTileIndex : layerData[0][0];
 		tileMap.tileInfo = this.tileInfo;
+		field.bounds.dX = field.bounds.sizeX = tileMap.width * tileWidth / 2;
+		field.bounds.dY = field.bounds.sizeY = tileMap.height * tileHeight / 2;
 
 		var tmMortal:TileMapMortal = this.data.allocObject(TileMapMortal);
 		tmMortal.chip = this.chip;
