@@ -102,19 +102,18 @@ class TiledExternal extends External {
 	private function loadTiledObject(xml:Xml, gridSize:Int):TiledObject {
 		if (xml.get("gid") != null) {
 			//tiled object with gid => arp mortal
-			var x:Xml = Xml.parse('<mortal class="${xml.get("type")}"/>').firstElement();
-			for (property in xml.elementsNamed("properties").next().elementsNamed("property")) {
-				x.set(property.get("name"), property.get("value"));
-			}
-			var mortal:Mortal = this.arpDomain.loadSeed(ArpSeed.fromXml(x), Mortal).value;
+			var mortal:Mortal = this.arpDomain.loadSeed(prepareSeedFromTiledObject(xml), Mortal).value;
 			if (mortal == null) return null;
 
 			mortal.position.x = Std.parseFloat(xml.get("x"));
 			mortal.position.y = Std.parseFloat(xml.get("y"));
+
 			return TiledObject.TiledMortal(mortal);
 		} else {
 			//tiled object without gid => arp anchor
-			var anchor:Anchor = this.data.allocObject(Anchor);
+			var anchor:Anchor = this.arpDomain.loadSeed(prepareSeedFromTiledObject(xml), Anchor).value;
+			if (anchor == null) return null;
+
 			anchor.position.x = Std.parseInt(xml.get("x"));
 			anchor.position.y = Std.parseInt(xml.get("y"));
 
@@ -126,8 +125,21 @@ class TiledExternal extends External {
 			hitFrame.hitCuboid.sizeX = width;
 			hitFrame.hitCuboid.sizeY = height;
 			anchor.hitFrame = hitFrame;
+
 			return TiledObject.TiledAnchor(anchor);
 		}
+	}
+
+	private function prepareSeedFromTiledObject(xml:Xml):ArpSeed {
+		var x:Xml = Xml.createElement("root");
+		var type:String = xml.get("type");
+		if (type != null) x.set("class", type);
+		for (properties in xml.elementsNamed("properties")) {
+			for (property in properties.elementsNamed("property")) {
+				x.set(property.get("name"), property.get("value"));
+			}
+		}
+		return ArpSeed.fromXml(x);
 	}
 
 	private function readTiledLayer(xml:Xml):Array<Array<Int>> {
